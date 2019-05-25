@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "36098859660",
+    "firebase_url": "https://healthmanager-241317.firebaseio.com",
+    "project_id": "healthmanager-241317",
+    "storage_bucket": "healthmanager-241317.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36098859660:android:ae806293a9729c1f",
+        "android_client_info": {
+          "package_name": "com.example.bbbb.healthmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "36098859660-89doutr6sdavsva8b2gtqlg5s6a6u1uo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bbbb.healthmanager",
+            "certificate_hash": "20bdbb2ae7ec65943e4485fcbe8b513e9c0c1c13"
+          }
+        },
+        {
+          "client_id": "36098859660-etap17049gi34ifo1u1llun3tkmeg4k5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bbbb.healthmanager",
+            "certificate_hash": "260567b6420679a18e625ba81558d77ab272ae1a"
+          }
+        },
+        {
+          "client_id": "36098859660-522omimbteqgsfjtj94eu07pb3vlvkvk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKOd5gpRZ-JI53g26bpT8w_sJK9eMw63k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "36098859660-522omimbteqgsfjtj94eu07pb3vlvkvk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

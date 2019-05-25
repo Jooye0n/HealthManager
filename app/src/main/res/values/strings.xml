@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">HealthManager</string>
+    <string name="loading">loading</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="name">name</string>
+    <string name="email">email</string>
+    <string name="password">password</string>
+    <string name="cancel">cancel</string>
+
+    <string name="email_is_empty">Please enter an email.</string>
+    <string name="email_not_matches">Please use the following format. \n example@example.com </string>
+    <string name="password_is_empty">Please enter a password.</string>
+    <string name="password_not_matches">Only the following characters can be used: \n a-z, A-Z, 0-9, !@.#$%^*?_~ </string>
+
+    <string name="signin">sign in</string>
+    <string name="success_login">Login success!</string>
+    <string name="failed_login">Failed to Login.</string>
+
+    <string name="signup">sign up</string>
+    <string name="success_signup">Signup success!</string>
+    <string name="failed_signup">failed to Signup.</string>
+
+    <!--tab1-->
+    <string name="profile">Profile</string>
+    <string name="date">Date</string>
+    <string name="morning">Morning</string>
+    <string name="afternoon">Afternoon</string>
+    <string name="evening">Evening</string>
 </resources>
