@@ -29,11 +29,14 @@ public class LoginActivity extends AppCompatActivity {
     // 파이어베이스 인증 객체 생성
     private FirebaseAuth mAuth;
 
-    // 이메일과 비밀번호
+    // 이름 생년월일 이메일 비밀번호
     private EditText editTextEmail;
     private EditText editTextPassword;
+    private EditText editTextName;
+    private EditText editTextBirth;
 
     private String userName = "";
+    private String userBirth = "";
     private String userEmail = "";
     private String userPassword = "";
 
@@ -50,6 +53,8 @@ public class LoginActivity extends AppCompatActivity {
 
         editTextEmail = findViewById(R.id.et_email);
         editTextPassword = findViewById(R.id.et_password);
+        editTextName = findViewById(R.id.et_username);
+        editTextBirth = findViewById(R.id.et_birth);
 
         if (getIntent().getBooleanExtra("signOut", false)) {
             FirebaseAuth.getInstance().signOut();
@@ -102,11 +107,26 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void signIn(View view) {
+        userName = editTextName.getText().toString();
+        userBirth = editTextBirth.getText().toString();
         userEmail = editTextEmail.getText().toString();
         userPassword = editTextPassword.getText().toString();
 
-        if(isValidEmail() && isValidPasswd()) {
-            loginUser(userEmail, userPassword);
+        if(isValidEmail() && isValidPasswd() && isValidBirth()) {
+            loginUser(userName, userBirth, userEmail, userPassword);
+        }
+    }
+
+    // 생년월일 유효성 검사
+    private boolean isValidBirth() {
+        if (userBirth.isEmpty()) {
+            // 이메일 공백
+            return false;
+        } else if (userBirth.length()!=8) {
+            // 생년월일 형식 불일치
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -157,7 +177,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     // 로그인
-    private void loginUser(String email, String password) {
+    private void loginUser(String name, String birth, String email, String password) {
         showProgressDialog();
 
         mAuth.signInWithEmailAndPassword(email, password)
