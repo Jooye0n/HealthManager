@@ -160,7 +160,18 @@ public class MainActivity extends AppCompatActivity
         entries.add(new Entry(2, 2));
         entries.add(new Entry(3, 0));
         entries.add(new Entry(4, 4));
-        entries.add(new Entry(5, 3));
+        entries.add(new Entry(5 ,1));
+        entries.add(new Entry(6, 2));
+        entries.add(new Entry(7, 4));
+        entries.add(new Entry(8, 8));
+        entries.add(new Entry(9, 1));
+        entries.add(new Entry(10, 2));
+        entries.add(new Entry(11, 0));
+        entries.add(new Entry(12, 4));
+        entries.add(new Entry(13 ,1));
+        entries.add(new Entry(14, 2));
+        entries.add(new Entry(15, 4));
+        entries.add(new Entry(16, 8));
 
         LineDataSet lineDataSet = new LineDataSet(entries, "속성명1");
         lineDataSet.setLineWidth(2);
@@ -193,6 +204,7 @@ public class MainActivity extends AppCompatActivity
         Description description = new Description();
         description.setText("");
 
+        lineChart.setDragEnabled(true);
         lineChart.setDoubleTapToZoomEnabled(false);
         lineChart.setDrawGridBackground(false);
         lineChart.setDescription(description);
