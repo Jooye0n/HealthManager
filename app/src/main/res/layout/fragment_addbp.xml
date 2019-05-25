@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/addbp_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorWhite">
+
+    <Button
+        android:id="@+id/back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableStart="@drawable/back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="10dp"
+        android:background="@color/colorWhite"
+        android:text="@string/back"
+        style="@style/Widget.AppCompat.Button.Borderless"/>
+
+    <LinearLayout
+        android:id="@+id/bp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="@id/addbp_fragment"
+        app:layout_constraintStart_toStartOf="@id/addbp_fragment"
+        app:layout_constraintTop_toTopOf="@id/addbp_fragment"
+        app:layout_constraintBottom_toBottomOf="@id/addbp_fragment">
+
+        <LinearLayout
+            android:id="@+id/sys"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="수축기" />
+
+            <NumberPicker
+                android:id="@+id/sys_picker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></NumberPicker>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/dia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="이완기" />
+
+            <NumberPicker
+                android:id="@+id/dia_picker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></NumberPicker>
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/ok_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/bp"
+        app:layout_constraintStart_toStartOf="@id/addbp_fragment"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"
+        android:text="@string/ok"
+        android:background="@color/colorWhite"
+        style="@style/Widget.AppCompat.Button.Borderless"/>
+
+</android.support.constraint.ConstraintLayout>

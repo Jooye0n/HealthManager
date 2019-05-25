@@ -17,6 +17,10 @@ public class LoadingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_loading);
         startLoading();
+
+        if (getIntent().getBooleanExtra("bpfr", false)) {
+            setResult(RESULT_OK);
+        }
     }
 
     private void startLoading() {

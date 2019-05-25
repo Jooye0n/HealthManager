@@ -1,13 +1,28 @@
 package com.example.bbbb.healthmanager;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.net.Uri;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -20,6 +35,9 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -43,8 +61,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.w3c.dom.Text;
 import org.tensorflow.lite.Interpreter;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
@@ -59,6 +79,14 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private static final int MY_PERMISSION_STORAGE = 1111;
+    private static final int MY_PERMISSION_CAMERA = 2222;
+    private static final int REQUEST_TAKE_PHOTO = 3333;
+    private static final int REQUEST_TAKE_ALBUM = 4444;
+    private static final int REQUEST_IMAGE_CROP = 5555;
+
+    SimpleDateFormat mFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat mFormatHome = new SimpleDateFormat("MMM dd일 EEE요일", Locale.KOREAN);
 
     private FirebaseDatabase database;
     private DatabaseReference mDatabase;
@@ -67,7 +95,21 @@ public class MainActivity extends AppCompatActivity
     private String userEmail = "";
     private String userName = "";
 
+    private ImageButton btnPhoto;
+    private String mCurrentPhotoPath;
+    private Uri imageUri;
+    private Uri photoURI, albumURI;
+
+    private TextView tvUserName, tvDateOfBirth, tvStatus, tvPredDate;
+
     private LineChart lineChart;
+
+    private TextView textViewDate;
+    private TextView BPTextView1, BPTextView2, BPTextView3;
+    private TextView BPTimeTextView1, BPTimeTextView2, BPTimeTextView3;
+
+    private Fragment addBPFragment = null;
+    private Bundle bundle;
 
     //사용자정보
     private int mYear, mMonth, mDay = 0;
@@ -84,9 +126,20 @@ public class MainActivity extends AppCompatActivity
 
         lineChart = (LineChart) findViewById(R.id.chart);
 
+
+
         // 탭 아이콘 지정
         TabHost host = findViewById(R.id.host);
         host.setup();
+
+        host.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            @Override
+            public void onTabChanged(String tabId) {
+                if (tabId.equals("tab1")) {
+                }
+
+            }
+        });
 
         TabHost.TabSpec spec = host.newTabSpec("tab1");
         spec.setContent(R.id.tab_content1);
@@ -115,7 +168,7 @@ public class MainActivity extends AppCompatActivity
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
-        // 네비케이션바
+        // 네비게이션바
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -140,9 +193,11 @@ public class MainActivity extends AppCompatActivity
         userID = split[0];
 
         database = FirebaseDatabase.getInstance();
-        mDatabase = database.getReference().child("users").child(userID).child("userName");
+        mDatabase = database.getReference();
 
-        mDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference userNameDatabase = mDatabase.child("users").child(userID).child("userName");
+
+        userNameDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 userNameTV.setText(dataSnapshot.getValue().toString());
@@ -154,6 +209,22 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+
+
+
+        // tab1 - set profile
+        btnPhoto = findViewById(R.id.button_user_photo);
+        tvUserName = findViewById(R.id.tv_profile_name);
+        tvDateOfBirth = findViewById(R.id.tv_profile_dob);
+        tvStatus = findViewById(R.id.tv_profile_status);
+        tvPredDate = findViewById(R.id.tv_profile_pred_date);
+
+
+
+        // tab2 - graph
+        TextView textViewHomeDate = findViewById(R.id.tv_home_date);
+        textViewHomeDate.setText(getTime1());
+
 
 
         List<Entry> entries = new ArrayList<>();
@@ -211,6 +282,32 @@ public class MainActivity extends AppCompatActivity
         lineChart.setDescription(description);
         lineChart.animateY(2000, Easing.EaseInCubic);
         lineChart.invalidate();
+
+
+
+        // tab2 - setBP
+        textViewDate = findViewById(R.id.curr_date);
+        textViewDate.setText(getTime2());
+
+        BPTextView1 = findViewById(R.id.tv_m_bp);
+        BPTextView2 = findViewById(R.id.tv_a_bp);
+        BPTextView3 = findViewById(R.id.tv_e_bp);
+
+        BPTimeTextView1 = findViewById(R.id.tv_m_time);
+        BPTimeTextView2 = findViewById(R.id.tv_a_time);
+        BPTimeTextView3 = findViewById(R.id.tv_e_time);
+
+        DatabaseReference bpDataBase = mDatabase.child("users").child(userID).child("bloodPressure");
+        setBPDataBase(bpDataBase);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        DatabaseReference bpDataBase = database.getReference().child("users").child(userID).child("bloodPressure");
+        setBPDataBase(bpDataBase);
     }
 
     @Override
@@ -228,6 +325,320 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private String getTime1() {
+        long mNow;
+        Date mDate;
+
+        mNow = System.currentTimeMillis();
+        mDate = new Date(mNow);
+
+        return mFormatHome.format(mDate);
+    }
+
+    private String getTime2() {
+        long mNow;
+        Date mDate;
+
+        mNow = System.currentTimeMillis();
+        mDate = new Date(mNow);
+
+        return mFormat.format(mDate);
+    }
+
+    private void fragmentSetting() {
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+        fragmentTransaction.replace(R.id.tab_content2, addBPFragment);
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
+    private void captureCamera() {
+        String state = Environment.getExternalStorageState();
+        // 외장 메모리 검사
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                } catch (IOException ex) {
+                    Log.e("captureCamera Error", ex.toString());
+                }
+                if (photoFile != null) {
+                    Uri providerURI = FileProvider.getUriForFile(this, getPackageName()+".fileprovider", photoFile);
+                    imageUri = providerURI;
+
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, providerURI);
+
+                    startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                }
+            }
+        } else {
+            Toast.makeText(this, "저장공간이 접근 불가능한 기기입니다", Toast.LENGTH_SHORT).show();
+            return;
+        }
+    }
+
+    public File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + ".jpg";
+        File imageFile = null;
+        File storageDir = new File(Environment.getExternalStorageDirectory() + "/Pictures", "hamer");
+
+        if (!storageDir.exists()) {
+            Log.i("mCurrentPhotoPath1", storageDir.toString());
+            storageDir.mkdirs();
+        }
+
+        imageFile = new File(storageDir, imageFileName);
+        mCurrentPhotoPath = imageFile.getAbsolutePath();
+
+        return imageFile;
+    }
+
+    private void getAlbum() {
+        Log.i("getAlbum", "Call");
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
+        startActivityForResult(intent, REQUEST_TAKE_ALBUM);
+    }
+
+    private void galleryAddPic() {
+        Log.i("galleryAddPic", "Call");
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+
+        File f = new File(mCurrentPhotoPath);
+        Uri contentUri = Uri.fromFile(f);
+        mediaScanIntent.setData(contentUri);
+        sendBroadcast(mediaScanIntent);
+        Toast.makeText(this, "사진이 앨범에 저장되었습니다.", Toast.LENGTH_SHORT).show();
+    }
+
+    public void cropImage() {
+        Log.i("cropImage", "Call");
+        Log.i("cropImage", "photoURI : " +photoURI + " / albumURI : "+albumURI);
+
+        Intent cropIntent = new Intent("com.android.camera.action.CROP");
+
+        cropIntent.setFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        cropIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        cropIntent.setDataAndType(photoURI, "image/*");
+        cropIntent.putExtra("aspectX", 1);
+        cropIntent.putExtra("aspectY", 1);
+        cropIntent.putExtra("scale", true);
+        cropIntent.putExtra("output", albumURI);
+        startActivityForResult(cropIntent, REQUEST_IMAGE_CROP);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        switch (requestCode) {
+            case REQUEST_TAKE_PHOTO:
+                if(resultCode == Activity.RESULT_OK) {
+                    try{
+                        Log.i("REQUEST_TAKE_PHOTO", "OK");
+                        galleryAddPic();
+
+                        btnPhoto.setImageURI(imageUri);
+                    } catch (Exception e){
+                        Log.e("REQUEST_TAKE_PHOTO", e.toString());
+                    }
+                } else {
+                    Toast.makeText((MainActivity.this), "사진찍기를 취소하였습니다", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case REQUEST_TAKE_ALBUM:
+                if(resultCode == Activity.RESULT_OK) {
+                    if(data.getData() != null){
+                        try{
+                            File albumFile = null;
+                            albumFile = createImageFile();
+                            photoURI = data.getData();
+                            albumURI = Uri.fromFile(albumFile);
+                            cropImage();
+                        } catch(Exception e){
+                            Log.e("TAKE_ALBUM_SINGLE ERROR", e.toString());
+                        }
+                    }
+                }
+                break;
+            case REQUEST_IMAGE_CROP:
+                if(resultCode == Activity.RESULT_OK){
+                    galleryAddPic();
+                    btnPhoto.setImageURI(albumURI);
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSION_STORAGE:
+                for (int i = 0; i < grantResults.length; i++) {
+                    if (grantResults[i] < 0) {
+                        Toast.makeText(MainActivity.this, "해당 권한을 활성화 하셔야 합니다.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                // 허용했다면 이 부분에서..
+
+                break;
+        }
+    }
+
+    public void onImageButtonClicekd(View view) {
+        switch (view.getId()) {
+            case R.id.button_user_photo:
+                CameraDialog cameraDialog = new CameraDialog(MainActivity.this);
+                cameraDialog.setDialogListener(new CameraDialog.CustomDialogListener() {
+                    @Override
+                    public void onCaptureClicked() {
+                        captureCamera();
+                    }
+
+                    @Override
+                    public void onAlbumClicked() {
+                        getAlbum();
+                    }
+                });
+                cameraDialog.show();
+
+                checkPermission();
+                break;
+            case R.id.button_refesh:
+                textViewDate.setText(getTime2());
+                break;
+            case R.id.button_m_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "mbp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+            case R.id.button_a_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "abp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+            case R.id.button_e_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "ebp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+        }
+    }
+
+    private void checkPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                final AlertDialog permissionDialog = builder.create();
+                permissionDialog.setTitle("알림");
+                permissionDialog.setMessage("저장소 권한이 거부되었습니다. 사용을 원하시면 설정에서 해당 권한을 직접 허용하셔야 합니다.");
+                permissionDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "설정", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    }
+                });
+                permissionDialog.setButton(DialogInterface.BUTTON_POSITIVE, "확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        permissionDialog.dismiss();
+                    }
+                });
+                permissionDialog.setCancelable(false);
+
+                permissionDialog.show();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}
+                        , MY_PERMISSION_STORAGE);
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                final AlertDialog permissionDialog = builder.create();
+                permissionDialog.setTitle("알림");
+                permissionDialog.setMessage("카메라 권한이 거부되었습니다. 사용을 원하시면 설정에서 해당 권한을 직접 허용하셔야 합니다.");
+                permissionDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "설정", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    }
+                });
+                permissionDialog.setButton(DialogInterface.BUTTON_POSITIVE, "확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        permissionDialog.dismiss();
+                    }
+                });
+                permissionDialog.setCancelable(false);
+
+                permissionDialog.show();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CAMERA}, MY_PERMISSION_CAMERA);
+            }
+        }
+    }
+
+    private void setBPDataBase(DatabaseReference bpDataBase) {
+        bpDataBase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String split[] = getTime2().split(" ");
+                for (DataSnapshot snapshot1 : dataSnapshot.getChildren()) {
+                    if (snapshot1.getKey().equals(split[0])) {
+                        for (DataSnapshot snapshot2 : dataSnapshot.child(split[0]).getChildren()) {
+                            String when = snapshot2.getKey();
+                            String bp[] = new String[3];
+                            int bpIdx = 0;
+
+                            for (DataSnapshot snapshot3 : dataSnapshot.child(split[0]).child(when).getChildren()) {
+                                bp[bpIdx++] = snapshot3.getValue().toString();
+                            }
+
+                            if (when.equals("morning")) {
+                                BPTimeTextView1.setText(" (" + bp[2] + ") ");
+                                BPTextView1.setText(bp[1] + " / " + bp[0]);
+                            } else if (when.equals("afternoon")) {
+                                BPTimeTextView2.setText(" (" + bp[2] + ") ");
+                                BPTextView2.setText(bp[1] + " / " + bp[0]);
+                            } else if (when.equals("evening")) {
+                                BPTimeTextView3.setText(" (" + bp[2] + ") ");
+                                BPTextView3.setText(bp[1] + " / " + bp[0]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     //생년월일 timepicker

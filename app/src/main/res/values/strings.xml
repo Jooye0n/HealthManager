@@ -1,32 +1,44 @@
 <resources>
-    <string name="app_name">HealthManager</string>
+    <string name="app_name">Hamer</string>
     <string name="loading">loading</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="name">name</string>
-    <string name="email">email</string>
-    <string name="password">password</string>
-    <string name="cancel">cancel</string>
+    <string name="name">이름</string>
+    <string name="date_of_birth">생년월일</string>
+    <string name="sex">성별</string>
+    <string name="email">이메일</string>
+    <string name="password">비밀번호</string>
+    <string name="cancel">취소</string>
 
     <string name="email_is_empty">Please enter an email.</string>
     <string name="email_not_matches">Please use the following format. \n example@example.com </string>
     <string name="password_is_empty">Please enter a password.</string>
-    <string name="password_not_matches">Only the following characters can be used: \n a-z, A-Z, 0-9, !@.#$%^*?_~ </string>
+    <string name="password_not_matches">Only the following characters can be used: \n a\-z, A\-Z, 0\-9, !@.#$%^*?_~ </string>
 
-    <string name="signin">sign in</string>
+    <string name="signin">로그인</string>
     <string name="success_login">Login success!</string>
     <string name="failed_login">Failed to Login.</string>
 
-    <string name="signup">sign up</string>
+    <string name="signup">회원가입</string>
     <string name="success_signup">Signup success!</string>
     <string name="failed_signup">failed to Signup.</string>
 
     <!--tab1-->
-    <string name="profile">Profile</string>
-    <string name="date">Date</string>
-    <string name="morning">Morning</string>
-    <string name="afternoon">Afternoon</string>
-    <string name="evening">Evening</string>
+    <string name="profile">내 정보</string>
+    <string name="date">날짜</string>
+    <string name="status">고혈압 상태</string>
+    <string name="pred_date">(2019.05.25)</string>
+    <string name="morning">아침</string>
+    <string name="afternoon">점심</string>
+    <string name="evening">저녁</string>
+    <string name="goBP">입력하러 가기</string>
+
+    <!--tab2-->
+    <string name="curr_date" >yyyy\-MM\-dd</string>
+    <string name="today_bp">오늘의 혈압</string>
+    <string name="ok">확인</string>
+    <string name="back">뒤로가기</string>
+    <string name="enter_bp">혈압을 입력해 주세요.</string>
 </resources>
