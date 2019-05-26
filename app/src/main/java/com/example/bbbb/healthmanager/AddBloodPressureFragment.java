@@ -82,18 +82,20 @@ public class AddBloodPressureFragment extends Fragment {
                 String split[] = getTime().split(" ");
 
                 if(buttonStatus.equals("mbp")) {
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("morning").child("time").setValue(split[1]);
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("morning").child("sys").setValue(String.valueOf(sysPicker.getValue()));
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("morning").child("dia").setValue(String.valueOf(diaPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("1morning").child("time").setValue(split[1]);
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("1morning").child("sys").setValue(String.valueOf(sysPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("1morning").child("dia").setValue(String.valueOf(diaPicker.getValue()));
                 } else if(buttonStatus.equals("abp")) {
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("afternoon").child("time").setValue(split[1]);
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("afternoon").child("sys").setValue(String.valueOf(sysPicker.getValue()));
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("afternoon").child("dia").setValue(String.valueOf(diaPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("2afternoon").child("time").setValue(split[1]);
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("2afternoon").child("sys").setValue(String.valueOf(sysPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("2afternoon").child("dia").setValue(String.valueOf(diaPicker.getValue()));
                 } else if(buttonStatus.equals("ebp")){
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("evening").child("time").setValue(split[1]);
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("evening").child("sys").setValue(String.valueOf(sysPicker.getValue()));
-                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("evening").child("dia").setValue(String.valueOf(diaPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("3evening").child("time").setValue(split[1]);
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("3evening").child("sys").setValue(String.valueOf(sysPicker.getValue()));
+                    mDatabase.child("users").child(userID).child("bloodPressure").child(split[0]).child("3evening").child("dia").setValue(String.valueOf(diaPicker.getValue()));
                 }
+
+                ((OnApplySelectedListener)activity).onCatagoryApplySelected((float)sysPicker.getValue(), (float)diaPicker.getValue());
 
                 FragmentManager fragmentManager = getActivity().getFragmentManager();
                 fragmentManager.beginTransaction().remove(AddBloodPressureFragment.this).commit();
@@ -130,5 +132,11 @@ public class AddBloodPressureFragment extends Fragment {
         if (context instanceof Activity) {
             this.activity = (Activity) context;
         }
+    }
+
+    public interface OnApplySelectedListener {
+
+        public void onCatagoryApplySelected(float sys, float dia);
+
     }
 }

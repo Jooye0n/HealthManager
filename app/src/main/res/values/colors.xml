@@ -9,7 +9,15 @@
     <color name="colorDarkGray">#888888</color>
     <color name="colorLightGray">#d2d2d2</color>
     <color name="colorLightGray2">#ECECEC</color>
-    <color name="colorPink">#d95550</color>
-    <color name="colorLightPink">#DD8C88</color>
+    <color name="colorRed">#d95550</color>
+    <color name="colorLightRed">#cc7976</color>
     <color name="colorWhite">#FAFBFC</color>
+
+    <color name="colorPink">#F9C5CF</color>
+    <color name="colorPink2">#F8A7B6</color>
+    <color name="colorLightPink">#FBD5DA</color>
+    <color name="colorMint">#48B9AC</color>
+    <color name="colorLightMint">#B1E6E0</color>
+
+
 </resources>

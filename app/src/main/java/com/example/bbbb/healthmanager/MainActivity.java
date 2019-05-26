@@ -42,12 +42,15 @@ import android.widget.Toast;
 
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -70,7 +73,8 @@ import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        AddBloodPressureFragment.OnApplySelectedListener {
     private static final int MY_PERMISSION_STORAGE = 1111;
     private static final int MY_PERMISSION_CAMERA = 2222;
     private static final int REQUEST_TAKE_PHOTO = 3333;
@@ -78,6 +82,7 @@ public class MainActivity extends AppCompatActivity
     private static final int REQUEST_IMAGE_CROP = 5555;
 
     SimpleDateFormat mFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    SimpleDateFormat mFormat2 = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat mFormatHome = new SimpleDateFormat("MMM dd일 EEE요일", Locale.KOREAN);
 
     private FirebaseDatabase database;
@@ -106,11 +111,20 @@ public class MainActivity extends AppCompatActivity
     private Fragment addBPFragment = null;
     private Bundle bundle;
 
+    private List<Entry> SysEntries, DiaEntries;
+    private LineDataSet lineDataSet1, lineDataSet2;
+    private LineData lineData, lineData2;
+
+    private String currDate;
+
     //사용자정보
     private int mYear, mMonth, mDay = 0;
     private boolean manPressed, womanPressed, smokeTF, familyTF;
     private int mKey, mWeight, mExer, mHighbp, mLowbp, mAge, gender;
     private float mPressure;
+
+    private int sysCount = 1;
+    private int diaCount = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -202,7 +216,7 @@ public class MainActivity extends AppCompatActivity
         userDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     if (snapshot.getKey().equals("userBirth")) {
                         tvDateOfBirth.setText(snapshot.getValue().toString());
                         userBirth = tvDateOfBirth.getText().toString();
@@ -210,7 +224,7 @@ public class MainActivity extends AppCompatActivity
                         mMonth = Integer.parseInt(userBirth.substring(4, 6));
                         mDay = Integer.parseInt(userBirth.substring(6, 8));
                         Calendar c = Calendar.getInstance();
-                        mAge = c.get(Calendar.YEAR)-mYear+1;
+                        mAge = c.get(Calendar.YEAR) - mYear + 1;
                         updateEditText();
                     } else if (snapshot.getKey().equals("userName")) {
                         tvUserName.setText(snapshot.getValue().toString());
@@ -226,53 +240,59 @@ public class MainActivity extends AppCompatActivity
         });
 
 
-
-
-
-
         // tab2 - graph
         TextView textViewHomeDate = findViewById(R.id.tv_home_date);
         textViewHomeDate.setText(getTime1());
 
+        currDate = getTime3();
 
 
-        List<Entry> entries = new ArrayList<>();
-        entries.add(new Entry(1, 1));
-        entries.add(new Entry(2, 2));
-        entries.add(new Entry(3, 0));
-        entries.add(new Entry(4, 4));
-        entries.add(new Entry(5 ,1));
-        entries.add(new Entry(6, 2));
-        entries.add(new Entry(7, 4));
-        entries.add(new Entry(8, 8));
-        entries.add(new Entry(9, 1));
-        entries.add(new Entry(10, 2));
-        entries.add(new Entry(11, 0));
-        entries.add(new Entry(12, 4));
-        entries.add(new Entry(13 ,1));
-        entries.add(new Entry(14, 2));
-        entries.add(new Entry(15, 4));
-        entries.add(new Entry(16, 8));
+        SysEntries = new ArrayList<>();
+        SysEntries.add(new Entry());
 
-        LineDataSet lineDataSet = new LineDataSet(entries, "속성명1");
-        lineDataSet.setLineWidth(2);
-        lineDataSet.setCircleRadius(6);
-        lineDataSet.setCircleColor(Color.parseColor("#FFA1B4DC"));
-        lineDataSet.setCircleHoleColor(Color.BLUE);
-        lineDataSet.setColor(Color.parseColor("#FFA1B4DC"));
-        lineDataSet.setDrawCircleHole(true);
-        lineDataSet.setDrawCircles(true);
-        lineDataSet.setDrawHorizontalHighlightIndicator(false);
-        lineDataSet.setDrawHighlightIndicators(false);
-        lineDataSet.setDrawValues(false);
+        lineDataSet1 = new LineDataSet(SysEntries, "SYS");
+        lineDataSet1.setLineWidth(2);
+        lineDataSet1.setCircleRadius(4);
+        lineDataSet1.setCircleColor(Color.parseColor("#FBD5DA"));
+        lineDataSet1.setCircleHoleColor(Color.parseColor("#F8A7B6"));
+        lineDataSet1.setColor(Color.parseColor("#FBD5DA"));
+        lineDataSet1.setDrawCircleHole(true);
+        lineDataSet1.setDrawCircles(true);
+        lineDataSet1.setDrawHorizontalHighlightIndicator(false);
+        lineDataSet1.setDrawHighlightIndicators(false);
+        lineDataSet1.setDrawValues(false);
+        lineDataSet1.setAxisDependency(YAxis.AxisDependency.LEFT);
 
-        LineData lineData = new LineData(lineDataSet);
+        DiaEntries = new ArrayList<>();
+        DiaEntries.add(new Entry());
+
+        lineDataSet2 = new LineDataSet(DiaEntries, "DIA");
+        lineDataSet2.setLineWidth(2);
+        lineDataSet2.setCircleRadius(4);
+        lineDataSet2.setCircleColor(Color.parseColor("#B1E6E0"));
+        lineDataSet2.setCircleHoleColor(Color.parseColor("#48B9AC"));
+        lineDataSet2.setColor(Color.parseColor("#B1E6E0"));
+        lineDataSet2.setDrawCircleHole(true);
+        lineDataSet2.setDrawCircles(true);
+        lineDataSet2.setDrawHorizontalHighlightIndicator(false);
+        lineDataSet2.setDrawHighlightIndicators(false);
+        lineDataSet2.setDrawValues(false);
+        lineDataSet2.setAxisDependency(YAxis.AxisDependency.LEFT);
+
+        lineData = new LineData(lineDataSet1);
+        lineData.addDataSet(lineDataSet2);
         lineChart.setData(lineData);
 
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextColor(Color.BLACK);
         xAxis.enableGridDashedLine(8, 24, 0);
+        xAxis.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                return "-";
+            }
+        });
 
         YAxis yLAxis = lineChart.getAxisLeft();
         yLAxis.setTextColor(Color.BLACK);
@@ -285,12 +305,19 @@ public class MainActivity extends AppCompatActivity
         Description description = new Description();
         description.setText("");
 
+        MyMarkerView marker = new MyMarkerView(this, R.layout.marker);
+        marker.setChartView(lineChart);
+        lineChart.setMarker(marker);
+        lineChart.setAutoScaleMinMaxEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setDoubleTapToZoomEnabled(false);
         lineChart.setDrawGridBackground(false);
         lineChart.setDescription(description);
         lineChart.animateY(2000, Easing.EaseInCubic);
+        lineChart.setVisibleXRangeMaximum(9);
+        lineChart.moveViewToX(lineData.getEntryCount());
         lineChart.invalidate();
+
 
         // tab1, tab2 - setBP
 
@@ -313,10 +340,20 @@ public class MainActivity extends AppCompatActivity
         BPTimeTextView3 = findViewById(R.id.tv_e_time);
 
 
-
         DatabaseReference bpDataBase = mDatabase.child("users").child(userID).child("bloodPressure");
-        setBPDataBase1(bpDataBase);
-        setBPDataBase2(bpDataBase); // tab2
+        setBPDataBase(bpDataBase); // tab2
+        drawBPGraph(bpDataBase);
+    }
+
+    @Override
+    public void onCatagoryApplySelected(float sys, float dia) {
+        SysEntries.add(new Entry(sysCount++, sys));
+        DiaEntries.add(new Entry(diaCount++, dia));
+        lineChart.setVisibleXRangeMaximum(9);
+        lineChart.moveViewToX(lineData.getEntryCount());
+        lineDataSet1.notifyDataSetChanged();
+        lineChart.notifyDataSetChanged();
+        lineChart.invalidate();
 
 
     }
@@ -326,7 +363,7 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
 
         DatabaseReference bpDataBase = database.getReference().child("users").child(userID).child("bloodPressure");
-        setBPDataBase2(bpDataBase);
+        setBPDataBase(bpDataBase);
     }
 
     @Override
@@ -344,6 +381,55 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void onImageButtonClicekd(View view) {
+        switch (view.getId()) {
+            case R.id.button_user_photo:
+                CameraDialog cameraDialog = new CameraDialog(MainActivity.this);
+                cameraDialog.setDialogListener(new CameraDialog.CustomDialogListener() {
+                    @Override
+                    public void onCaptureClicked() {
+                        captureCamera();
+                    }
+
+                    @Override
+                    public void onAlbumClicked() {
+                        getAlbum();
+                    }
+                });
+                cameraDialog.show();
+
+                checkPermission();
+                break;
+            case R.id.button_refesh:
+                textViewDate.setText(getTime2());
+                break;
+            case R.id.button_m_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "mbp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+            case R.id.button_a_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "abp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+            case R.id.button_e_bp:
+                addBPFragment = new AddBloodPressureFragment();
+                bundle = new Bundle();
+                bundle.putString("userID", userID);
+                bundle.putString("buttonStatus", "ebp");
+                addBPFragment.setArguments(bundle);
+                fragmentSetting();
+                break;
+        }
     }
 
     private String getTime1() {
@@ -364,6 +450,16 @@ public class MainActivity extends AppCompatActivity
         mDate = new Date(mNow);
 
         return mFormat.format(mDate);
+    }
+
+    private String getTime3() {
+        long mNow;
+        Date mDate;
+
+        mNow = System.currentTimeMillis();
+        mDate = new Date(mNow);
+
+        return mFormat2.format(mDate);
     }
 
     private void fragmentSetting() {
@@ -388,7 +484,7 @@ public class MainActivity extends AppCompatActivity
                     Log.e("captureCamera Error", ex.toString());
                 }
                 if (photoFile != null) {
-                    Uri providerURI = FileProvider.getUriForFile(this, getPackageName()+".fileprovider", photoFile);
+                    Uri providerURI = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
                     imageUri = providerURI;
 
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, providerURI);
@@ -440,7 +536,7 @@ public class MainActivity extends AppCompatActivity
 
     public void cropImage() {
         Log.i("cropImage", "Call");
-        Log.i("cropImage", "photoURI : " +photoURI + " / albumURI : "+albumURI);
+        Log.i("cropImage", "photoURI : " + photoURI + " / albumURI : " + albumURI);
 
         Intent cropIntent = new Intent("com.android.camera.action.CROP");
 
@@ -458,13 +554,13 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         switch (requestCode) {
             case REQUEST_TAKE_PHOTO:
-                if(resultCode == Activity.RESULT_OK) {
-                    try{
+                if (resultCode == Activity.RESULT_OK) {
+                    try {
                         Log.i("REQUEST_TAKE_PHOTO", "OK");
                         galleryAddPic();
 
                         btnPhoto.setImageURI(imageUri);
-                    } catch (Exception e){
+                    } catch (Exception e) {
                         Log.e("REQUEST_TAKE_PHOTO", e.toString());
                     }
                 } else {
@@ -472,22 +568,22 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
             case REQUEST_TAKE_ALBUM:
-                if(resultCode == Activity.RESULT_OK) {
-                    if(data.getData() != null){
-                        try{
+                if (resultCode == Activity.RESULT_OK) {
+                    if (data.getData() != null) {
+                        try {
                             File albumFile = null;
                             albumFile = createImageFile();
                             photoURI = data.getData();
                             albumURI = Uri.fromFile(albumFile);
                             cropImage();
-                        } catch(Exception e){
+                        } catch (Exception e) {
                             Log.e("TAKE_ALBUM_SINGLE ERROR", e.toString());
                         }
                     }
                 }
                 break;
             case REQUEST_IMAGE_CROP:
-                if(resultCode == Activity.RESULT_OK){
+                if (resultCode == Activity.RESULT_OK) {
                     galleryAddPic();
                     btnPhoto.setImageURI(albumURI);
                 }
@@ -511,54 +607,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void onImageButtonClicekd(View view) {
-        switch (view.getId()) {
-            case R.id.button_user_photo:
-                CameraDialog cameraDialog = new CameraDialog(MainActivity.this);
-                cameraDialog.setDialogListener(new CameraDialog.CustomDialogListener() {
-                    @Override
-                    public void onCaptureClicked() {
-                        captureCamera();
-                    }
-
-                    @Override
-                    public void onAlbumClicked() {
-                        getAlbum();
-                    }
-                });
-                cameraDialog.show();
-
-                checkPermission();
-                break;
-            case R.id.button_refesh:
-                textViewDate.setText(getTime2());
-                break;
-            case R.id.button_m_bp:
-                addBPFragment = new AddBloodPressureFragment();
-                bundle = new Bundle();
-                bundle.putString("userID", userID);
-                bundle.putString("buttonStatus", "mbp");
-                addBPFragment.setArguments(bundle);
-                fragmentSetting();
-                break;
-            case R.id.button_a_bp:
-                addBPFragment = new AddBloodPressureFragment();
-                bundle = new Bundle();
-                bundle.putString("userID", userID);
-                bundle.putString("buttonStatus", "abp");
-                addBPFragment.setArguments(bundle);
-                fragmentSetting();
-                break;
-            case R.id.button_e_bp:
-                addBPFragment = new AddBloodPressureFragment();
-                bundle = new Bundle();
-                bundle.putString("userID", userID);
-                bundle.putString("buttonStatus", "ebp");
-                addBPFragment.setArguments(bundle);
-                fragmentSetting();
-                break;
-        }
-    }
 
     private void checkPermission() {
         if (ContextCompat.checkSelfPermission(
@@ -622,11 +670,41 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void setBPDataBase1(DatabaseReference bpDataBase1) {
+    private void drawBPGraph(DatabaseReference bpDataBase) {
+        bpDataBase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot1 : dataSnapshot.getChildren()) {
+                    for (DataSnapshot snapshot2 : snapshot1.getChildren()) {
+                        for (DataSnapshot snapshot3 : snapshot2.getChildren()) {
+                            if(snapshot3.getKey().equals("sys")) {
+                                SysEntries.add(new Entry(sysCount++, Float.parseFloat(snapshot3.getValue().toString())));
+                                lineChart.setVisibleXRangeMaximum(9);
+                                lineChart.moveViewToX(lineData.getEntryCount());
+                                lineDataSet1.notifyDataSetChanged();
+                                lineChart.notifyDataSetChanged();
+                                lineChart.invalidate();
+                            } else if(snapshot3.getKey().equals("dia")) {
+                                DiaEntries.add(new Entry(diaCount++, Float.parseFloat(snapshot3.getValue().toString())));
+                                lineChart.setVisibleXRangeMaximum(9);
+                                lineChart.moveViewToX(lineData.getEntryCount());
+                                lineDataSet1.notifyDataSetChanged();
+                                lineChart.notifyDataSetChanged();
+                                lineChart.invalidate();
+                            }
+                        }
+                    }
+                }
+            }
 
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
-    private void setBPDataBase2(DatabaseReference bpDataBase) {
+    private void setBPDataBase(DatabaseReference bpDataBase) {
         bpDataBase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -642,17 +720,17 @@ public class MainActivity extends AppCompatActivity
                                 bp[bpIdx++] = snapshot3.getValue().toString();
                             }
 
-                            if (when.equals("morning")) {
+                            if (when.equals("1morning")) {
                                 BPTimeTextView1.setText(" (" + bp[2] + ") ");
                                 BPTextView1.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys1.setText(bp[1]);
                                 tvHomeDia1.setText(bp[0]);
-                            } else if (when.equals("afternoon")) {
+                            } else if (when.equals("2afternoon")) {
                                 BPTimeTextView2.setText(" (" + bp[2] + ") ");
                                 BPTextView2.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys2.setText(bp[1]);
                                 tvHomeDia2.setText(bp[0]);
-                            } else if (when.equals("evening")) {
+                            } else if (when.equals("3evening")) {
                                 BPTimeTextView3.setText(" (" + bp[2] + ") ");
                                 BPTextView3.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys3.setText(bp[1]);
@@ -676,14 +754,13 @@ public class MainActivity extends AppCompatActivity
         int id = view.getId();
 
 
-
         if (id == R.id.dateButton) {
             DatePickerDialog datePickerDialog = new DatePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog_MinWidth, new DatePickerDialog.OnDateSetListener() {
                 @Override
                 public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                     try {
                         mYear = year;
-                        mMonth = monthOfYear+1;
+                        mMonth = monthOfYear + 1;
                         mDay = dayOfMonth;
                         updateEditText();
                     } catch (Exception e) {
@@ -716,30 +793,26 @@ public class MainActivity extends AppCompatActivity
         TextView familyF = findViewById(R.id.familyFButton);
 
         if (id == R.id.manButton) {
-            gender=1;
+            gender = 1;
             manView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             womanView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-        }
-        else if (id == R.id.womanButton){
+        } else if (id == R.id.womanButton) {
             gender = 2;
             womanView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             manView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-        }
-        else if (id == R.id.smokeTButton){
+        } else if (id == R.id.smokeTButton) {
             smokeTF = true;
             smokeT.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             smokeF.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-        }
-        else if (id == R.id.smokeFButton){
+        } else if (id == R.id.smokeFButton) {
             smokeTF = false;
             smokeF.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             smokeT.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-        }else if (id == R.id.familyTButton){
+        } else if (id == R.id.familyTButton) {
             familyTF = true;
             familyT.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             familyF.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-        }
-        else if (id == R.id.familyFButton){
+        } else if (id == R.id.familyFButton) {
             familyTF = true;
             familyF.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             familyT.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
@@ -748,22 +821,22 @@ public class MainActivity extends AppCompatActivity
     }
 
     //예측하기 버튼
-    public boolean onclickedPredbutton(View view){
+    public boolean onclickedPredbutton(View view) {
         int id = view.getId();
-        if (id == R.id.predButton){
-            EditText keyView = (EditText)findViewById(R.id.statureButton);
-            EditText weightView = (EditText)findViewById(R.id.weightButton);
-            EditText exerView = (EditText)findViewById(R.id.walkButton);
-            EditText highbpView = (EditText)findViewById(R.id.highbpButton);
-            EditText lowbpView = (EditText)findViewById(R.id.lowbpButton);
+        if (id == R.id.predButton) {
+            EditText keyView = (EditText) findViewById(R.id.statureButton);
+            EditText weightView = (EditText) findViewById(R.id.weightButton);
+            EditText exerView = (EditText) findViewById(R.id.walkButton);
+            EditText highbpView = (EditText) findViewById(R.id.highbpButton);
+            EditText lowbpView = (EditText) findViewById(R.id.lowbpButton);
 
             mKey = Integer.parseInt(keyView.getText().toString());
             mWeight = Integer.parseInt(weightView.getText().toString());
             mExer = Integer.parseInt(exerView.getText().toString());
             mHighbp = Integer.parseInt(highbpView.getText().toString());
             mLowbp = Integer.parseInt(lowbpView.getText().toString());
-            int mAgegroup = (mAge-10)/3;
-            float mBMI = (float)mWeight/(float)mKey;
+            int mAgegroup = (mAge - 10) / 3;
+            float mBMI = (float) mWeight / (float) mKey;
 
             //사용자 data 입력
             float[] inputs = new float[]{gender, mAgegroup, mHighbp, mLowbp, mBMI};
@@ -774,13 +847,12 @@ public class MainActivity extends AppCompatActivity
             tflite.run(inputs, output);
 
             TextView pred = findViewById(R.id.bigButton);
-            if(output[0]>120){
+            if (output[0] > 120) {
                 pred.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_red_background));
-            }
-            else
+            } else
                 pred.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
 
-            pred.setText("6개월 후 수축기혈압수치\n"+String.valueOf(Math.round(output[0])+"mmHg"));
+            pred.setText("6개월 후 수축기혈압수치\n" + String.valueOf(Math.round(output[0]) + "mmHg"));
 
             final ScrollView scrollView = findViewById(R.id.tab_content3);
             scrollView.post(new Runnable() {
@@ -797,8 +869,7 @@ public class MainActivity extends AppCompatActivity
     private Interpreter getTfliteInterpreter(String modelPath) {
         try {
             return new Interpreter(loadModelFile(MainActivity.this, modelPath));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
