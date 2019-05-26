@@ -108,6 +108,9 @@ public class MainActivity extends AppCompatActivity
     private TextView BPTextView1, BPTextView2, BPTextView3;
     private TextView BPTimeTextView1, BPTimeTextView2, BPTimeTextView3;
 
+    private TextView tvAverSys, tvAverDia;
+    private float totalSys, totalDia;
+
     private Fragment addBPFragment = null;
     private Bundle bundle;
 
@@ -135,6 +138,8 @@ public class MainActivity extends AppCompatActivity
 
         lineChart = (LineChart) findViewById(R.id.chart);
         datetextView = findViewById(R.id.dateButton);
+        tvAverSys = findViewById(R.id.tv_aver_sys);
+        tvAverDia = findViewById(R.id.tv_aver_dia);
 
         // 탭 아이콘 지정
         TabHost host = findViewById(R.id.host);
@@ -355,7 +360,28 @@ public class MainActivity extends AppCompatActivity
         lineChart.notifyDataSetChanged();
         lineChart.invalidate();
 
+        totalSys += sys;
+        totalDia += dia;
+        float averSys = totalSys / (sysCount - 1);
+        float averDia = totalDia / (diaCount - 1);
+        tvAverSys.setText(Float.toString(averSys));
+        tvAverDia.setText(Float.toString(averDia));
 
+        if(averSys >= 120) {
+            if(averSys >= 140) {
+                tvAverSys.setTextColor(getResources().getColor(R.color.colorRed));
+            } else {
+                tvAverSys.setTextColor(getResources().getColor(R.color.colorOrange));
+            }
+        }
+
+        if(averDia >= 80) {
+            if(averDia >= 90) {
+                tvAverDia.setTextColor(getResources().getColor(R.color.colorRed));
+            } else {
+                tvAverDia.setTextColor(getResources().getColor(R.color.colorOrange));
+            }
+        }
     }
 
     @Override
@@ -684,6 +710,8 @@ public class MainActivity extends AppCompatActivity
                                 lineDataSet1.notifyDataSetChanged();
                                 lineChart.notifyDataSetChanged();
                                 lineChart.invalidate();
+
+                                totalSys += Float.parseFloat(snapshot3.getValue().toString());
                             } else if(snapshot3.getKey().equals("dia")) {
                                 DiaEntries.add(new Entry(diaCount++, Float.parseFloat(snapshot3.getValue().toString())));
                                 lineChart.setVisibleXRangeMaximum(9);
@@ -691,8 +719,31 @@ public class MainActivity extends AppCompatActivity
                                 lineDataSet1.notifyDataSetChanged();
                                 lineChart.notifyDataSetChanged();
                                 lineChart.invalidate();
+
+                                totalDia += Float.parseFloat(snapshot3.getValue().toString());
                             }
                         }
+                    }
+                }
+
+                float averSys = totalSys / (sysCount - 1);
+                float averDia = totalDia / (diaCount - 1);
+                tvAverSys.setText(Float.toString(averSys));
+                tvAverDia.setText(Float.toString(averDia));
+
+                if(averSys >= 120) {
+                    if(averSys >= 140) {
+                        tvAverSys.setTextColor(getResources().getColor(R.color.colorRed));
+                    } else {
+                        tvAverSys.setTextColor(getResources().getColor(R.color.colorOrange));
+                    }
+                }
+
+                if(averDia >= 80) {
+                    if(averDia >= 90) {
+                        tvAverDia.setTextColor(getResources().getColor(R.color.colorRed));
+                    } else {
+                        tvAverDia.setTextColor(getResources().getColor(R.color.colorOrange));
                     }
                 }
             }
@@ -725,16 +776,64 @@ public class MainActivity extends AppCompatActivity
                                 BPTextView1.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys1.setText(bp[1]);
                                 tvHomeDia1.setText(bp[0]);
+
+                                if(Float.parseFloat(bp[1]) >= 120) {
+                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                        tvHomeSys1.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeSys1.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
+
+                                if(Float.parseFloat(bp[0]) >= 80) {
+                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                        tvHomeDia1.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeDia1.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
                             } else if (when.equals("2afternoon")) {
                                 BPTimeTextView2.setText(" (" + bp[2] + ") ");
                                 BPTextView2.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys2.setText(bp[1]);
                                 tvHomeDia2.setText(bp[0]);
+
+                                if(Float.parseFloat(bp[1]) >= 120) {
+                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                        tvHomeSys2.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeSys2.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
+
+                                if(Float.parseFloat(bp[0]) >= 80) {
+                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                        tvHomeDia2.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeDia2.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
                             } else if (when.equals("3evening")) {
                                 BPTimeTextView3.setText(" (" + bp[2] + ") ");
                                 BPTextView3.setText(bp[1] + " / " + bp[0]);
                                 tvHomeSys3.setText(bp[1]);
                                 tvHomeDia3.setText(bp[0]);
+
+                                if(Float.parseFloat(bp[1]) >= 120) {
+                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                        tvHomeSys3.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeSys3.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
+
+                                if(Float.parseFloat(bp[0]) >= 80) {
+                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                        tvHomeDia3.setTextColor(getResources().getColor(R.color.colorRed));
+                                    } else {
+                                        tvHomeDia3.setTextColor(getResources().getColor(R.color.colorOrange));
+                                    }
+                                }
                             }
                         }
                     }
