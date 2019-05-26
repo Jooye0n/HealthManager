@@ -27,10 +27,12 @@ public class SignupActivity extends AppCompatActivity {
     private EditText editTextName;
     private EditText editTextEmail;
     private EditText editTextPassword;
+    private EditText editTextBirth;
 
     private String userName = "";
     private String userEmail = "";
     private String userPassword = "";
+    private String userBirth = "";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,6 +46,7 @@ public class SignupActivity extends AppCompatActivity {
         editTextName = findViewById(R.id.signup_et_name);
         editTextEmail = findViewById(R.id.signup_et_email);
         editTextPassword = findViewById(R.id.signup_et_password);
+        editTextBirth = findViewById(R.id.signup_et_birth);
 
         findViewById(R.id.signup_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,13 +54,15 @@ public class SignupActivity extends AppCompatActivity {
                 userName = editTextName.getText().toString();
                 userEmail = editTextEmail.getText().toString();
                 userPassword = editTextPassword.getText().toString();
+                userBirth = editTextBirth.getText().toString();
 
-                if (isValidEmail() && isValidPasswd()) {
+                if (isValidEmail() && isValidPasswd() && isValidBirth()) {
                     Intent intent = new Intent();
 
                     intent.putExtra("userName", userName);
                     intent.putExtra("userEmail", userEmail);
                     intent.putExtra("userPassword", userPassword);
+                    intent.putExtra("userBirth", userBirth);
 
                     database = FirebaseDatabase.getInstance();
                     mDatabase = database.getReference();
@@ -66,6 +71,7 @@ public class SignupActivity extends AppCompatActivity {
 
                     mDatabase.child("users").child(split[0]).child("userEmail").setValue(userEmail);
                     mDatabase.child("users").child(split[0]).child("userName").setValue(userName);
+                    mDatabase.child("users").child(split[0]).child("userBirth").setValue(userBirth);
 
                     setResult(RESULT_OK, intent);
 
@@ -105,6 +111,20 @@ public class SignupActivity extends AppCompatActivity {
         } else if (!PASSWORD_PATTERN.matcher(userPassword).matches()) {
             // 비밀번호 형식 불일치
             Toast.makeText(getApplicationContext(), R.string.password_not_matches, Toast.LENGTH_SHORT).show();
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // 생년월일 유효성 검사
+    private boolean isValidBirth() {
+        if (userBirth.isEmpty()) {
+            Toast.makeText(getApplicationContext(), R.string.dob_is_empty, Toast.LENGTH_SHORT).show();
+            return false;
+        } else if (userBirth.length()!= 8) {
+            // 생년월일 형식 불일치
+            Toast.makeText(getApplicationContext(), R.string.dob_not_matches, Toast.LENGTH_SHORT).show();
             return false;
         } else {
             return true;

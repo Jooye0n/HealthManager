@@ -16,6 +16,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -195,13 +196,28 @@ public class MainActivity extends AppCompatActivity
         database = FirebaseDatabase.getInstance();
         mDatabase = database.getReference();
 
-        DatabaseReference userNameDatabase = mDatabase.child("users").child(userID).child("userName");
+
+        // tab1 - set profile
+        btnPhoto = findViewById(R.id.button_user_photo);
+        tvUserName = findViewById(R.id.tv_profile_name);
+        tvDateOfBirth = findViewById(R.id.tv_profile_dob);
+        tvStatus = findViewById(R.id.tv_profile_status);
+        tvPredDate = findViewById(R.id.tv_profile_pred_date);
+
+        DatabaseReference userNameDatabase = mDatabase.child("users").child(userID);
 
         userNameDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    if (snapshot.getKey().equals("userBirth")) {
+                        tvDateOfBirth.setText(snapshot.getValue().toString());
+                    } else if (snapshot.getKey().equals("userName")) {
+                        tvUserName.setText(snapshot.getValue().toString());
+                        userNameTV.setText(snapshot.getValue().toString());
+                    }
+                }
                 userNameTV.setText(dataSnapshot.getValue().toString());
-                userName = (String) userNameTV.getText();
             }
 
             @Override
@@ -212,12 +228,6 @@ public class MainActivity extends AppCompatActivity
 
 
 
-        // tab1 - set profile
-        btnPhoto = findViewById(R.id.button_user_photo);
-        tvUserName = findViewById(R.id.tv_profile_name);
-        tvDateOfBirth = findViewById(R.id.tv_profile_dob);
-        tvStatus = findViewById(R.id.tv_profile_status);
-        tvPredDate = findViewById(R.id.tv_profile_pred_date);
 
 
 
