@@ -13,10 +13,7 @@ import android.net.Uri;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
-import android.graphics.Color;
 import android.os.Environment;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -34,14 +31,10 @@ import android.support.design.widget.NavigationView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.HorizontalScrollView;
 import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TextView;
@@ -55,14 +48,12 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.HorizontalViewPortHandler;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.w3c.dom.Text;
 import org.tensorflow.lite.Interpreter;
 
 import java.io.File;
@@ -102,6 +93,8 @@ public class MainActivity extends AppCompatActivity
     private Uri photoURI, albumURI;
 
     private TextView tvUserName, tvDateOfBirth, tvStatus, tvPredDate;
+    private TextView tvHomeSys1, tvHomeSys2, tvHomeSys3;
+    private TextView tvHomeDia1, tvHomeDia2, tvHomeDia3;
 
     private LineChart lineChart;
 
@@ -204,9 +197,9 @@ public class MainActivity extends AppCompatActivity
         tvStatus = findViewById(R.id.tv_profile_status);
         tvPredDate = findViewById(R.id.tv_profile_pred_date);
 
-        DatabaseReference userNameDatabase = mDatabase.child("users").child(userID);
+        DatabaseReference userDatabase = mDatabase.child("users").child(userID);
 
-        userNameDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+        userDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
@@ -217,7 +210,6 @@ public class MainActivity extends AppCompatActivity
                         userNameTV.setText(snapshot.getValue().toString());
                     }
                 }
-                userNameTV.setText(dataSnapshot.getValue().toString());
             }
 
             @Override
@@ -293,9 +285,15 @@ public class MainActivity extends AppCompatActivity
         lineChart.animateY(2000, Easing.EaseInCubic);
         lineChart.invalidate();
 
+        // tab1, tab2 - setBP
 
+        tvHomeSys1 = findViewById(R.id.tv_home_m_sys);
+        tvHomeSys2 = findViewById(R.id.tv_home_a_sys);
+        tvHomeSys3 = findViewById(R.id.tv_home_e_sys);
+        tvHomeDia1 = findViewById(R.id.tv_home_m_dia);
+        tvHomeDia2 = findViewById(R.id.tv_home_a_dia);
+        tvHomeDia3 = findViewById(R.id.tv_home_e_dia);
 
-        // tab2 - setBP
         textViewDate = findViewById(R.id.curr_date);
         textViewDate.setText(getTime2());
 
@@ -307,8 +305,11 @@ public class MainActivity extends AppCompatActivity
         BPTimeTextView2 = findViewById(R.id.tv_a_time);
         BPTimeTextView3 = findViewById(R.id.tv_e_time);
 
+
+
         DatabaseReference bpDataBase = mDatabase.child("users").child(userID).child("bloodPressure");
-        setBPDataBase(bpDataBase);
+        setBPDataBase1(bpDataBase);
+        setBPDataBase2(bpDataBase); // tab2
 
     }
 
@@ -317,7 +318,7 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
 
         DatabaseReference bpDataBase = database.getReference().child("users").child(userID).child("bloodPressure");
-        setBPDataBase(bpDataBase);
+        setBPDataBase2(bpDataBase);
     }
 
     @Override
@@ -613,7 +614,11 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void setBPDataBase(DatabaseReference bpDataBase) {
+    private void setBPDataBase1(DatabaseReference bpDataBase1) {
+
+    }
+
+    private void setBPDataBase2(DatabaseReference bpDataBase) {
         bpDataBase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -632,12 +637,18 @@ public class MainActivity extends AppCompatActivity
                             if (when.equals("morning")) {
                                 BPTimeTextView1.setText(" (" + bp[2] + ") ");
                                 BPTextView1.setText(bp[1] + " / " + bp[0]);
+                                tvHomeSys1.setText(bp[1]);
+                                tvHomeDia1.setText(bp[0]);
                             } else if (when.equals("afternoon")) {
                                 BPTimeTextView2.setText(" (" + bp[2] + ") ");
                                 BPTextView2.setText(bp[1] + " / " + bp[0]);
+                                tvHomeSys2.setText(bp[1]);
+                                tvHomeDia2.setText(bp[0]);
                             } else if (when.equals("evening")) {
                                 BPTimeTextView3.setText(" (" + bp[2] + ") ");
                                 BPTextView3.setText(bp[1] + " / " + bp[0]);
+                                tvHomeSys3.setText(bp[1]);
+                                tvHomeDia3.setText(bp[0]);
                             }
                         }
                     }
