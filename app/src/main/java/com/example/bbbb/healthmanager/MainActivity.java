@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity
     private String userID = "";
     private String userEmail = "";
     private String userName = "";
+    private String userBirth = "";
 
     private ImageButton btnPhoto;
     private String mCurrentPhotoPath;
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity
 
     private LineChart lineChart;
 
-    private TextView textViewDate;
+    private TextView textViewDate, datetextView;
     private TextView BPTextView1, BPTextView2, BPTextView3;
     private TextView BPTimeTextView1, BPTimeTextView2, BPTimeTextView3;
 
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity
     //사용자정보
     private int mYear, mMonth, mDay = 0;
     private boolean manPressed, womanPressed, smokeTF, familyTF;
-    private int mKey, mWeight, mExer;
+    private int mKey, mWeight, mExer, mHighbp, mLowbp, mAge, gender;
     private float mPressure;
 
     @Override
@@ -119,8 +120,7 @@ public class MainActivity extends AppCompatActivity
         startActivity(loadingIntent);
 
         lineChart = (LineChart) findViewById(R.id.chart);
-
-
+        datetextView = findViewById(R.id.dateButton);
 
         // 탭 아이콘 지정
         TabHost host = findViewById(R.id.host);
@@ -205,6 +205,13 @@ public class MainActivity extends AppCompatActivity
                 for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
                     if (snapshot.getKey().equals("userBirth")) {
                         tvDateOfBirth.setText(snapshot.getValue().toString());
+                        userBirth = tvDateOfBirth.getText().toString();
+                        mYear = Integer.parseInt(userBirth.substring(0, 4));
+                        mMonth = Integer.parseInt(userBirth.substring(4, 6));
+                        mDay = Integer.parseInt(userBirth.substring(6, 8));
+                        Calendar c = Calendar.getInstance();
+                        mAge = c.get(Calendar.YEAR)-mYear+1;
+                        updateEditText();
                     } else if (snapshot.getKey().equals("userName")) {
                         tvUserName.setText(snapshot.getValue().toString());
                         userNameTV.setText(snapshot.getValue().toString());
@@ -310,6 +317,7 @@ public class MainActivity extends AppCompatActivity
         DatabaseReference bpDataBase = mDatabase.child("users").child(userID).child("bloodPressure");
         setBPDataBase1(bpDataBase);
         setBPDataBase2(bpDataBase); // tab2
+
 
     }
 
@@ -667,21 +675,22 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = view.getId();
 
+
+
         if (id == R.id.dateButton) {
-            Calendar c = Calendar.getInstance();
             DatePickerDialog datePickerDialog = new DatePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog_MinWidth, new DatePickerDialog.OnDateSetListener() {
                 @Override
                 public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                     try {
                         mYear = year;
-                        mMonth = monthOfYear + 1;
+                        mMonth = monthOfYear+1;
                         mDay = dayOfMonth;
                         updateEditText();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-            }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+            }, mYear, mMonth, mDay);
 
             datePickerDialog.getDatePicker().setCalendarViewShown(false);
             datePickerDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -692,9 +701,8 @@ public class MainActivity extends AppCompatActivity
 
     protected void updateEditText() {
         StringBuffer sb = new StringBuffer();
-        TextView textView = findViewById(R.id.dateButton);
-        textView.setText(sb.append(mYear + "/").append(mMonth + "/").append(mDay));
-
+        datetextView.setText(sb.append(mYear + "/").append(mMonth + "/").append(mDay));
+        mMonth--;
     }
 
     //유무 선택버튼
@@ -708,16 +716,14 @@ public class MainActivity extends AppCompatActivity
         TextView familyF = findViewById(R.id.familyFButton);
 
         if (id == R.id.manButton) {
-            womanPressed=false;
+            gender=1;
             manView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             womanView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-            manPressed = true;
         }
         else if (id == R.id.womanButton){
-            manPressed = false;
+            gender = 2;
             womanView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_selected_background));
             manView.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
-            womanPressed = true;
         }
         else if (id == R.id.smokeTButton){
             smokeTF = true;
@@ -748,17 +754,19 @@ public class MainActivity extends AppCompatActivity
             EditText keyView = (EditText)findViewById(R.id.statureButton);
             EditText weightView = (EditText)findViewById(R.id.weightButton);
             EditText exerView = (EditText)findViewById(R.id.walkButton);
-            EditText pressView = (EditText)findViewById(R.id.pressureButton);
+            EditText highbpView = (EditText)findViewById(R.id.highbpButton);
+            EditText lowbpView = (EditText)findViewById(R.id.lowbpButton);
 
             mKey = Integer.parseInt(keyView.getText().toString());
             mWeight = Integer.parseInt(weightView.getText().toString());
             mExer = Integer.parseInt(exerView.getText().toString());
-            mPressure = Integer.parseInt(pressView.getText().toString());
+            mHighbp = Integer.parseInt(highbpView.getText().toString());
+            mLowbp = Integer.parseInt(lowbpView.getText().toString());
+            int mAgegroup = (mAge-10)/3;
+            float mBMI = (float)mWeight/(float)mKey;
 
-            //이 입력은 예시로 넣은거
-            float[] inputs = new float[]{80, 71, 98};
             //사용자 data 입력
-            //float[] inputs = new float[]{mPressure, (float)mWeight/(float)mKey, mExer};
+            float[] inputs = new float[]{gender, mAgegroup, mHighbp, mLowbp, mBMI};
             //예측값 변수 초기화
             float[] output = new float[]{0};
 
@@ -766,9 +774,13 @@ public class MainActivity extends AppCompatActivity
             tflite.run(inputs, output);
 
             TextView pred = findViewById(R.id.bigButton);
-            pred.setText("6개월 후 혈압수치\n"+String.valueOf(output[0]));
-            //사용자 입력값 잘 받아오는지 확인하는 용도
-            //pred.setText(String.valueOf(mPressure)+" "+String.valueOf(mKey)+" "+String.valueOf(mKey)+" "+String.valueOf(mExer));
+            if(output[0]>120){
+                pred.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_red_background));
+            }
+            else
+                pred.setBackground(ContextCompat.getDrawable(this, R.drawable.custom_background));
+
+            pred.setText("6개월 후 수축기혈압수치\n"+String.valueOf(Math.round(output[0])+"mmHg"));
 
             final ScrollView scrollView = findViewById(R.id.tab_content3);
             scrollView.post(new Runnable() {

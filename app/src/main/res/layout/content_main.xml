@@ -710,7 +710,6 @@
                     android:hint="키"
                     android:imeOptions="actionDone"
                     android:inputType="number"
-                    android:onClick="onclickedStaturebutton"
                     android:paddingStart="20dp"
                     android:paddingTop="20dp"
                     android:paddingEnd="20dp"
@@ -758,7 +757,6 @@
                     android:hint="체중"
                     android:imeOptions="actionDone"
                     android:inputType="number"
-                    android:onClick="onclickedStaturebutton"
                     android:paddingStart="20dp"
                     android:paddingTop="20dp"
                     android:paddingEnd="20dp"
@@ -806,7 +804,6 @@
                     android:hint="오늘의 걸음수"
                     android:imeOptions="actionDone"
                     android:inputType="number"
-                    android:onClick="onclickedStaturebutton"
                     android:paddingStart="20dp"
                     android:paddingTop="20dp"
                     android:paddingEnd="20dp"
@@ -826,33 +823,99 @@
             </LinearLayout>
 
             <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="30dp"
+            android:paddingStart="10dp"
+            android:paddingTop="20dp"
+            android:text="수축기혈압 수치를 입력하세요."
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/highbpButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/custom_background"
+                    android:gravity="center"
+                    android:hint="수축기혈압"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp"
+                    android:text="mmHg"
+                    android:textSize="16dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginTop="30dp"
                 android:paddingStart="10dp"
                 android:paddingTop="20dp"
-                android:text="현재 혈압 수치를 입력하세요."
+                android:text="이완기혈압 수치를 입력하세요."
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/pressureButton"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="20dp"
-                android:background="@drawable/custom_background"
-                android:gravity="center"
-                android:hint="혈압"
-                android:imeOptions="actionDone"
-                android:inputType="number"
-                android:onClick="onclickeddatebutton"
-                android:paddingStart="20dp"
-                android:paddingTop="20dp"
-                android:paddingEnd="20dp"
-                android:paddingBottom="20dp" />
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/lowbpButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/custom_background"
+                    android:gravity="center"
+                    android:hint="이완기혈압"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="20dp"
+                    android:paddingTop="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="20dp"
+                    android:text="mmHg"
+                    android:textSize="16dp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
 
             <TextView
                 android:layout_width="match_parent"
