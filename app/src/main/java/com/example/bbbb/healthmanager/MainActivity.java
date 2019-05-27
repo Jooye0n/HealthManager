@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity
     private String userName = "";
     private String userBirth = "";
 
+    private TabHost host;
+
     private ImageButton btnPhoto;
     private String mCurrentPhotoPath;
     private Uri imageUri;
@@ -142,7 +144,7 @@ public class MainActivity extends AppCompatActivity
         tvAverDia = findViewById(R.id.tv_aver_dia);
 
         // 탭 아이콘 지정
-        TabHost host = findViewById(R.id.host);
+        host = findViewById(R.id.host);
         host.setup();
 
         host.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
@@ -454,6 +456,9 @@ public class MainActivity extends AppCompatActivity
                 bundle.putString("buttonStatus", "ebp");
                 addBPFragment.setArguments(bundle);
                 fragmentSetting();
+                break;
+            case R.id.button_input:
+                host.setCurrentTab(1);
                 break;
         }
     }
