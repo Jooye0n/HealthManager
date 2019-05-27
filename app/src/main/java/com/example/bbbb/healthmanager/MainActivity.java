@@ -1,5 +1,11 @@
 package com.example.bbbb.healthmanager;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,6 +15,7 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.net.Uri;
 import android.app.DatePickerDialog;
 import android.content.Intent;
@@ -32,6 +39,14 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ImageButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -57,6 +72,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import org.tensorflow.lite.Interpreter;
 
 import java.io.File;
@@ -68,8 +93,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity
@@ -131,12 +158,76 @@ public class MainActivity extends AppCompatActivity
     private int sysCount = 1;
     private int diaCount = 1;
 
+
+
+    /*------- 주연 변수 -------*/
+    private BackPressCloseHandler backPressCloseHandler;
+    //-- crawling --
+    private String htmlPageUrl_1 = "http://hqcenter.snu.ac.kr/archives/jiphyunjeon_type/h-disease";
+    private String htmlPageUrl_2 = "http://hqcenter.snu.ac.kr/archives/jiphyunjeon_type/h-disease/page/2?issub=yes";
+    private String htmlPageUrl_3 = "http://hqcenter.snu.ac.kr/archives/jiphyunjeon_type/h-disease/page/3?issub=yes";
+
+    static List EMPTY = new ArrayList();
+    static List LIST_MENU = new ArrayList();
+    private Elements titles1, titles2, titles3, body1, body2, body3;
+    private Bitmap[] bm1 = new Bitmap[6];
+    private Bitmap[] bm2 = new Bitmap[6];
+    private Bitmap[] bm3 = new Bitmap[6];
+
+    // Window, Chrome의 User Agent.안드로이드 삼성 브라우저도 Chromium 기반이어서 UserAgent =  Chrome
+    private String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
+
+    //custome listView를 위함
+    private ListView listView;
+    private ListViewAdapter listViewAdapter;
+
+
+    private String htmlPageUrl119 = "http://www.dang119.com/shop/board/list.php?id=datac";
+    private String ntmlLogin = "https://www.dang119.com:14027/shop/member/login.php?&";
+    private ArrayAdapter adapter;
+    static List LIST_FAQ = new ArrayList();
+    private Elements titleList;
+    private ListView listFAQ;
+    private Map<String, String >loginCookie;
+
+    //bluetooth
+    private ImageButton button_connect_bluetooth;
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            backPressCloseHandler.onBackPressed();
+        }
+    }
+
+    //----------------------
+
+
+
+
+
+
+
+    @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Intent loadingIntent = new Intent(this, LoadingActivity.class);
         startActivity(loadingIntent);
+
+        lineChart = (LineChart)findViewById(R.id.chart);
+        backPressCloseHandler = new BackPressCloseHandler(this);
+
+
+        //크롤링 클래스 실행
+        JsoupAsyncTask jsoupAsyncTask = new JsoupAsyncTask();
+        jsoupAsyncTask.execute();
+        JsoupAsyncTaskFAQ jsoupAsyncTaskFAQ = new JsoupAsyncTaskFAQ();
+        jsoupAsyncTaskFAQ.execute();
 
         lineChart = (LineChart) findViewById(R.id.chart);
         datetextView = findViewById(R.id.dateButton);
@@ -175,6 +266,7 @@ public class MainActivity extends AppCompatActivity
         spec.setContent(R.id.tab_content4);
         spec.setIndicator(null, ResourcesCompat.getDrawable(getResources(), R.drawable.tab_news, null));
         host.addTab(spec);
+
 
 
         // 툴바
@@ -392,6 +484,320 @@ public class MainActivity extends AppCompatActivity
 
         DatabaseReference bpDataBase = database.getReference().child("users").child(userID).child("bloodPressure");
         setBPDataBase(bpDataBase);
+
+
+
+        /*-- 주연 --*/
+        button_connect_bluetooth = (ImageButton)findViewById(R.id.button_connect_bluetooth);
+
+
+        //블루투스 연결 버튼
+        button_connect_bluetooth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 새 창에서 BluetoothConnectActivity 실행
+                Intent intent = new Intent(MainActivity.this, BluetoothConnectActivity.class);
+                startActivity(intent);
+                overridePendingTransition(R.anim.slide_up_anim, R.anim.no_change);
+            }
+        });
+
+        listView = (ListView)findViewById(R.id.listHealth);
+        listViewAdapter = new ListViewAdapter();
+
+        adapter = new ArrayAdapter(this, R.layout.web_list_layout, EMPTY) ;
+        listFAQ = (ListView) findViewById(R.id.listFAQ) ;
+        listFAQ.setAdapter(adapter);
+
+
+
+
+    }
+
+    private class JsoupAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+                Document doc1 = Jsoup.connect(htmlPageUrl_1)
+                        .userAgent(userAgent)
+                        .get();
+                //테스트
+                //Elements titles= doc.select("div.news-con h1.tit-news");
+                //배열
+                Document doc2 = Jsoup.connect(htmlPageUrl_2).userAgent(userAgent).get();
+                Document doc3 = Jsoup.connect(htmlPageUrl_3).userAgent(userAgent).get();
+
+
+
+                //이미지 가져와서 비트맵으로 변환
+                titles1 = doc1.select("div.post-content h1.entry-title");
+                body1 = doc1.select("div.entry-summary p");
+                titles2 = doc2.select("div.post-content h1.entry-title");
+                body2 = doc1.select("div.entry-summary p");
+                titles3 = doc3.select("div.post-content h1.entry-title");
+                body3 = doc1.select("div.entry-summary p");
+
+                bm1 = getImage(doc1, titles1.size());
+                bm2 = getImage(doc2, titles2.size());
+                bm3 = getImage(doc3, titles3.size());
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+
+            for(int i=0; i<titles1.size();i++){
+                listViewAdapter.addItem(titles1.get(i).text().trim(),body1.get(i).text().trim(),bm1[i]);
+                LIST_MENU.add(titles1.get(i).text().trim());
+            }
+            for(int i=0; i<titles2.size();i++){
+                listViewAdapter.addItem(titles2.get(i).text().trim(),body2.get(i).text().trim(),bm2[i]);
+                LIST_MENU.add(titles2.get(i).text().trim());
+            }
+            for(int i=0; i<titles3.size();i++){
+                listViewAdapter.addItem(titles3.get(i).text().trim(),body3.get(i).text().trim(),bm3[i]);
+                LIST_MENU.add(titles3.get(i).text().trim());
+            }
+
+
+            //리스트뷰에 어뎁터 set
+            listView.setAdapter(listViewAdapter);
+
+            //total 14
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                    Intent intent = new Intent(WebQandA.this, MainActivity.class);
+//                    startActivity(intent);
+
+                    //intent로 pos(0-13)전달
+                    Intent intent = new Intent(MainActivity.this, WebHealthDetailActivity.class);
+                    Log.i("POSITION", String.valueOf(position));
+                    intent.putExtra("POSITION", String.valueOf(position));
+                    intent.putExtra("TITLE", String.valueOf(LIST_MENU.get(position)));
+                    Log.i("log", String.valueOf(LIST_MENU.get(position)));
+
+                    //startActivity(new Intent(현재Activity.this, 불러올Activity.class));
+                    //overridePendingTransition(R.anim.현재(사라질)Activity애니메이션, R.anim.현재(사라질)Activity애니메이션);
+
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.slide_up_anim, R.anim.no_change);
+                }
+            });
+
+        }
+    }
+
+    private class JsoupAsyncTaskFAQ extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+                Connection.Response loginPageResponse = Jsoup.connect(ntmlLogin)
+                        .method(Connection.Method.GET)
+                        .execute();
+
+                //로그인페이지 쿠키 (로그인 전 쿠키)
+                Map<String, String> loginTryCookie = loginPageResponse.cookies();
+
+                //로그인페이지로 전송할 토큰
+                //String ofp = loginPageDocument.select("input.m_id").val();
+                //String nfp = loginPageDocument.select("input.password").val();
+
+                //로그인페이지로 전송할 data
+                Map<String, String> data = new HashMap<>();
+                data.put("m_id", "wndus6165");
+                data.put("password", "Wkwmdsk0920");
+
+                Connection.Response response = Jsoup.connect(ntmlLogin)
+                        .userAgent(userAgent)
+                        .timeout(3000)
+                        .cookies(loginTryCookie)//쿠키
+                        .data(data)//데이터
+                        .method(Connection.Method.POST)//보내기
+                        .execute();//실행
+
+                loginCookie = response.cookies();//로그인 후의 쿠키
+
+                Document doc = Jsoup.connect(htmlPageUrl119)
+                        .userAgent(userAgent)
+                        .get();
+
+                Elements titles = doc.select("div.sub_page tr");
+                Log.v("sdgsadg", "parsingDiv");
+
+                titleList = titles;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            Log.v("onPostExecute", "check");
+
+            //titleList에서 짝수 element만 가져옴
+            for(int i=4; i<43;i+=2){
+                Element e = titleList.get(i);
+                System.out.println("title: " + e.text());
+
+                LIST_FAQ.add(e.text().trim());
+                adapter.add(e.text().trim());
+            }
+
+            listFAQ.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    //position :0-19
+                    Intent intent = new Intent(MainActivity.this, WebQandADetailActivity.class);
+                    Log.i("POSITION", String.valueOf(position));
+                    intent.putExtra("POSITION", String.valueOf(position));
+                    //startActivity(intent);
+
+
+                    //imageview.setImageResource(R.drawable.mountain);
+
+                    //FAQimg.setImageResource(R.drawable.s1250);
+
+                    final Dialog dialog = new Dialog(MainActivity.this);
+
+                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                    dialog.setContentView(R.layout.fragment_faq_dialog);
+                    ImageView FAQimg = dialog.findViewById(R.id.FAQimg);
+
+                    View.OnClickListener listener = new View.OnClickListener() {
+                        @Override
+                        public void onClick( View view ) {
+                            dialog.dismiss();
+                        }
+                    };
+
+                    switch (position){
+                        //dafault = (1258, 5)
+                        case 0:
+                            FAQimg.setImageResource(R.drawable.s1263);
+                            break;
+                        case 1:
+                            FAQimg.setImageResource(R.drawable.s1262);
+                            break;
+                        case 2:
+                            FAQimg.setImageResource(R.drawable.s1261);
+                            break;
+                        case 3:
+                            FAQimg.setImageResource(R.drawable.s1260);
+                            break;
+                        case 4:
+                            FAQimg.setImageResource(R.drawable.s1259);
+                            break;
+                        case 6:
+                            FAQimg.setImageResource(R.drawable.s1257);
+                            break;
+                        case 7:
+                            FAQimg.setImageResource(R.drawable.s1256);
+                            break;
+                        case 8:
+                            FAQimg.setImageResource(R.drawable.s1255);
+                            break;
+                        case 9:
+                            FAQimg.setImageResource(R.drawable.s1254);
+                            break;
+                        case 10:
+                            FAQimg.setImageResource(R.drawable.s1253);
+                            break;
+                        case 11:
+                            FAQimg.setImageResource(R.drawable.s1252);
+                            break;
+                        case 12:
+                            FAQimg.setImageResource(R.drawable.s1251);
+                            break;
+                        case 13:
+                            FAQimg.setImageResource(R.drawable.s1250);
+                            break;
+                        case 14:
+                            FAQimg.setImageResource(R.drawable.s1249);
+                            break;
+                        case 15:
+                            FAQimg.setImageResource(R.drawable.s1248);
+                            break;
+                        case 16:
+                            FAQimg.setImageResource(R.drawable.s1247);
+                            break;
+                        case 17:
+                            FAQimg.setImageResource(R.drawable.s1246);
+                            break;
+                        case 18:
+                            FAQimg.setImageResource(R.drawable.s1245);
+                            break;
+                        case 19:
+                            FAQimg.setImageResource(R.drawable.s1244);
+                            break;
+                    }
+
+
+                    Button ok = dialog.findViewById(R.id.filter_ok);
+
+                    switch (position){
+                        case 0:
+
+                    }
+
+                    ok.setOnClickListener(listener);
+                    WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+
+
+
+                    params.width = 1400;
+                    dialog.getWindow().setAttributes(params);
+                    dialog.show();
+                }
+            });
+
+        }
+    }
+
+    //이미지 가져오기
+    public Bitmap[] getImage(Document doc, int size){
+        Bitmap[] bm = new Bitmap[6];
+        for(int i=0; i<size;i++){
+
+            String imgUrl = ""+doc.body()
+                    .getElementsByClass("attachment-medium wp-post-image").eq(i).select("img").attr("src");
+            System.out.println(imgUrl);
+
+            try {
+                URL url = new URL(imgUrl);
+                URLConnection conn = url.openConnection();
+                conn.connect();
+                BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());
+                bm[i] = BitmapFactory.decodeStream(bis);
+                bis.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return bm;
     }
 
     @Override
