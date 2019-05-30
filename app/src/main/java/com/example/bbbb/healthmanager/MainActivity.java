@@ -869,6 +869,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
     private String getTime1() {
         long mNow;
         Date mDate;
