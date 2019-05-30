@@ -22,7 +22,8 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/loadingheart"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme.NoActionBar">
+        android:theme="@style/AppTheme.NoActionBar"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".SplashActivity"
