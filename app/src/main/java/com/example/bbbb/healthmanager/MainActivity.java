@@ -82,6 +82,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+
 import org.tensorflow.lite.Interpreter;
 
 import java.io.File;
@@ -127,6 +128,7 @@ public class MainActivity extends AppCompatActivity
     private Uri imageUri;
     private Uri photoURI, albumURI;
 
+    private TextView userNameTV;
     private TextView tvUserName, tvDateOfBirth, tvStatus, tvPredDate;
     private TextView tvHomeSys1, tvHomeSys2, tvHomeSys3;
     private TextView tvHomeDia1, tvHomeDia2, tvHomeDia3;
@@ -159,7 +161,6 @@ public class MainActivity extends AppCompatActivity
     private int diaCount = 1;
 
 
-
     /*------- 주연 변수 -------*/
     private BackPressCloseHandler backPressCloseHandler;
     //-- crawling --
@@ -188,7 +189,7 @@ public class MainActivity extends AppCompatActivity
     static List LIST_FAQ = new ArrayList();
     private Elements titleList;
     private ListView listFAQ;
-    private Map<String, String >loginCookie;
+    private Map<String, String> loginCookie;
 
     //bluetooth
     private ImageButton button_connect_bluetooth;
@@ -206,11 +207,6 @@ public class MainActivity extends AppCompatActivity
     //----------------------
 
 
-
-
-
-
-
     @SuppressLint("WrongViewCast")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,7 +215,7 @@ public class MainActivity extends AppCompatActivity
         Intent loadingIntent = new Intent(this, LoadingActivity.class);
         startActivity(loadingIntent);
 
-        lineChart = (LineChart)findViewById(R.id.chart);
+        lineChart = (LineChart) findViewById(R.id.chart);
         backPressCloseHandler = new BackPressCloseHandler(this);
 
 
@@ -268,7 +264,6 @@ public class MainActivity extends AppCompatActivity
         host.addTab(spec);
 
 
-
         // 툴바
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -290,7 +285,7 @@ public class MainActivity extends AppCompatActivity
         View nav_header_view = navigationView.getHeaderView(0);
 
         // User information setting
-        final TextView userNameTV = nav_header_view.findViewById(R.id.userName);
+        userNameTV = nav_header_view.findViewById(R.id.userName);
         TextView userEmailTV = nav_header_view.findViewById(R.id.userEmail);
 
         userEmailTV.setText(myIntent.getStringExtra("userEmail"));
@@ -312,31 +307,36 @@ public class MainActivity extends AppCompatActivity
 
         DatabaseReference userDatabase = mDatabase.child("users").child(userID);
 
-        userDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    if (snapshot.getKey().equals("userBirth")) {
-                        tvDateOfBirth.setText(snapshot.getValue().toString());
-                        userBirth = tvDateOfBirth.getText().toString();
-                        mYear = Integer.parseInt(userBirth.substring(0, 4));
-                        mMonth = Integer.parseInt(userBirth.substring(4, 6));
-                        mDay = Integer.parseInt(userBirth.substring(6, 8));
-                        Calendar c = Calendar.getInstance();
-                        mAge = c.get(Calendar.YEAR) - mYear + 1;
-                        updateEditText();
-                    } else if (snapshot.getKey().equals("userName")) {
-                        tvUserName.setText(snapshot.getValue().toString());
-                        userNameTV.setText(snapshot.getValue().toString());
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+        updateProfile(userDatabase);
+//        userDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+//                    if (snapshot.getKey().equals("userBirth")) {
+//                        tvDateOfBirth.setText(snapshot.getValue().toString());
+//                        userBirth = tvDateOfBirth.getText().toString();
+//                        mYear = Integer.parseInt(userBirth.substring(0, 4));
+//                        mMonth = Integer.parseInt(userBirth.substring(4, 6));
+//                        mDay = Integer.parseInt(userBirth.substring(6, 8));
+//                        Calendar c = Calendar.getInstance();
+//                        mAge = c.get(Calendar.YEAR) - mYear + 1;
+//                        updateEditText();
+//                    } else if (snapshot.getKey().equals("userName")) {
+//                        tvUserName.setText(snapshot.getValue().toString());
+//                        userNameTV.setText(snapshot.getValue().toString());
+//                    } else if (snapshot.getKey().equals("userStatus")) {
+//                        tvStatus.setText(snapshot.getValue().toString());
+//                    } else if (snapshot.getKey().equals("userPredDate")) {
+//                        tvPredDate.setText(snapshot.getValue().toString());
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//            }
+//        });
 
 
         // tab2 - graph
@@ -438,7 +438,6 @@ public class MainActivity extends AppCompatActivity
         BPTimeTextView2 = findViewById(R.id.tv_a_time);
         BPTimeTextView3 = findViewById(R.id.tv_e_time);
 
-
         DatabaseReference bpDataBase = mDatabase.child("users").child(userID).child("bloodPressure");
         setBPDataBase(bpDataBase); // tab2
         drawBPGraph(bpDataBase);
@@ -461,16 +460,16 @@ public class MainActivity extends AppCompatActivity
         tvAverSys.setText(Float.toString(averSys));
         tvAverDia.setText(Float.toString(averDia));
 
-        if(averSys >= 120) {
-            if(averSys >= 140) {
+        if (averSys >= 120) {
+            if (averSys >= 140) {
                 tvAverSys.setTextColor(getResources().getColor(R.color.colorRed));
             } else {
                 tvAverSys.setTextColor(getResources().getColor(R.color.colorOrange));
             }
         }
 
-        if(averDia >= 80) {
-            if(averDia >= 90) {
+        if (averDia >= 80) {
+            if (averDia >= 90) {
                 tvAverDia.setTextColor(getResources().getColor(R.color.colorRed));
             } else {
                 tvAverDia.setTextColor(getResources().getColor(R.color.colorOrange));
@@ -483,12 +482,14 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
 
         DatabaseReference bpDataBase = database.getReference().child("users").child(userID).child("bloodPressure");
+        DatabaseReference userDatabase = database.getReference().child("users").child(userID);
         setBPDataBase(bpDataBase);
+        updateProfile(userDatabase);
 
 
 
         /*-- 주연 --*/
-        button_connect_bluetooth = (ImageButton)findViewById(R.id.button_connect_bluetooth);
+        button_connect_bluetooth = (ImageButton) findViewById(R.id.button_connect_bluetooth);
 
 
         //블루투스 연결 버튼
@@ -502,14 +503,12 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        listView = (ListView)findViewById(R.id.listHealth);
+        listView = (ListView) findViewById(R.id.listHealth);
         listViewAdapter = new ListViewAdapter();
 
-        adapter = new ArrayAdapter(this, R.layout.web_list_layout, EMPTY) ;
-        listFAQ = (ListView) findViewById(R.id.listFAQ) ;
+        adapter = new ArrayAdapter(this, R.layout.web_list_layout, EMPTY);
+        listFAQ = (ListView) findViewById(R.id.listFAQ);
         listFAQ.setAdapter(adapter);
-
-
 
 
     }
@@ -535,7 +534,6 @@ public class MainActivity extends AppCompatActivity
                 Document doc3 = Jsoup.connect(htmlPageUrl_3).userAgent(userAgent).get();
 
 
-
                 //이미지 가져와서 비트맵으로 변환
                 titles1 = doc1.select("div.post-content h1.entry-title");
                 body1 = doc1.select("div.entry-summary p");
@@ -558,16 +556,16 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Void result) {
 
-            for(int i=0; i<titles1.size();i++){
-                listViewAdapter.addItem(titles1.get(i).text().trim(),body1.get(i).text().trim(),bm1[i]);
+            for (int i = 0; i < titles1.size(); i++) {
+                listViewAdapter.addItem(titles1.get(i).text().trim(), body1.get(i).text().trim(), bm1[i]);
                 LIST_MENU.add(titles1.get(i).text().trim());
             }
-            for(int i=0; i<titles2.size();i++){
-                listViewAdapter.addItem(titles2.get(i).text().trim(),body2.get(i).text().trim(),bm2[i]);
+            for (int i = 0; i < titles2.size(); i++) {
+                listViewAdapter.addItem(titles2.get(i).text().trim(), body2.get(i).text().trim(), bm2[i]);
                 LIST_MENU.add(titles2.get(i).text().trim());
             }
-            for(int i=0; i<titles3.size();i++){
-                listViewAdapter.addItem(titles3.get(i).text().trim(),body3.get(i).text().trim(),bm3[i]);
+            for (int i = 0; i < titles3.size(); i++) {
+                listViewAdapter.addItem(titles3.get(i).text().trim(), body3.get(i).text().trim(), bm3[i]);
                 LIST_MENU.add(titles3.get(i).text().trim());
             }
 
@@ -657,7 +655,7 @@ public class MainActivity extends AppCompatActivity
             Log.v("onPostExecute", "check");
 
             //titleList에서 짝수 element만 가져옴
-            for(int i=4; i<43;i+=2){
+            for (int i = 4; i < 43; i += 2) {
                 Element e = titleList.get(i);
                 System.out.println("title: " + e.text());
 
@@ -688,12 +686,12 @@ public class MainActivity extends AppCompatActivity
 
                     View.OnClickListener listener = new View.OnClickListener() {
                         @Override
-                        public void onClick( View view ) {
+                        public void onClick(View view) {
                             dialog.dismiss();
                         }
                     };
 
-                    switch (position){
+                    switch (position) {
                         //dafault = (1258, 5)
                         case 0:
                             FAQimg.setImageResource(R.drawable.s1263);
@@ -757,14 +755,13 @@ public class MainActivity extends AppCompatActivity
 
                     Button ok = dialog.findViewById(R.id.filter_ok);
 
-                    switch (position){
+                    switch (position) {
                         case 0:
 
                     }
 
                     ok.setOnClickListener(listener);
                     WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
-
 
 
                     params.width = 1400;
@@ -777,11 +774,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     //이미지 가져오기
-    public Bitmap[] getImage(Document doc, int size){
+    public Bitmap[] getImage(Document doc, int size) {
         Bitmap[] bm = new Bitmap[6];
-        for(int i=0; i<size;i++){
+        for (int i = 0; i < size; i++) {
 
-            String imgUrl = ""+doc.body()
+            String imgUrl = "" + doc.body()
                     .getElementsByClass("attachment-medium wp-post-image").eq(i).select("img").attr("src");
             System.out.println(imgUrl);
 
@@ -868,7 +865,6 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
     }
-
 
 
     private String getTime1() {
@@ -1109,6 +1105,38 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void updateProfile(DatabaseReference userDatabase) {
+        userDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    if (snapshot.getKey().equals("userBirth")) {
+                        tvDateOfBirth.setText(snapshot.getValue().toString());
+                        userBirth = tvDateOfBirth.getText().toString();
+                        mYear = Integer.parseInt(userBirth.substring(0, 4));
+                        mMonth = Integer.parseInt(userBirth.substring(4, 6));
+                        mDay = Integer.parseInt(userBirth.substring(6, 8));
+                        Calendar c = Calendar.getInstance();
+                        mAge = c.get(Calendar.YEAR) - mYear + 1;
+                        updateEditText();
+                    } else if (snapshot.getKey().equals("userName")) {
+                        tvUserName.setText(snapshot.getValue().toString());
+                        userNameTV.setText(snapshot.getValue().toString());
+                    } else if (snapshot.getKey().equals("userStatus")) {
+                        tvStatus.setText(snapshot.getValue().toString());
+                    } else if (snapshot.getKey().equals("userPredDate")) {
+                        tvPredDate.setText(snapshot.getValue().toString());
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     private void drawBPGraph(DatabaseReference bpDataBase) {
         bpDataBase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -1116,7 +1144,7 @@ public class MainActivity extends AppCompatActivity
                 for (DataSnapshot snapshot1 : dataSnapshot.getChildren()) {
                     for (DataSnapshot snapshot2 : snapshot1.getChildren()) {
                         for (DataSnapshot snapshot3 : snapshot2.getChildren()) {
-                            if(snapshot3.getKey().equals("sys")) {
+                            if (snapshot3.getKey().equals("sys")) {
                                 SysEntries.add(new Entry(sysCount++, Float.parseFloat(snapshot3.getValue().toString())));
                                 lineChart.setVisibleXRangeMaximum(9);
                                 lineChart.moveViewToX(lineData.getEntryCount());
@@ -1125,7 +1153,7 @@ public class MainActivity extends AppCompatActivity
                                 lineChart.invalidate();
 
                                 totalSys += Float.parseFloat(snapshot3.getValue().toString());
-                            } else if(snapshot3.getKey().equals("dia")) {
+                            } else if (snapshot3.getKey().equals("dia")) {
                                 DiaEntries.add(new Entry(diaCount++, Float.parseFloat(snapshot3.getValue().toString())));
                                 lineChart.setVisibleXRangeMaximum(9);
                                 lineChart.moveViewToX(lineData.getEntryCount());
@@ -1144,16 +1172,16 @@ public class MainActivity extends AppCompatActivity
                 tvAverSys.setText(Float.toString(averSys));
                 tvAverDia.setText(Float.toString(averDia));
 
-                if(averSys >= 120) {
-                    if(averSys >= 140) {
+                if (averSys >= 120) {
+                    if (averSys >= 140) {
                         tvAverSys.setTextColor(getResources().getColor(R.color.colorRed));
                     } else {
                         tvAverSys.setTextColor(getResources().getColor(R.color.colorOrange));
                     }
                 }
 
-                if(averDia >= 80) {
-                    if(averDia >= 90) {
+                if (averDia >= 80) {
+                    if (averDia >= 90) {
                         tvAverDia.setTextColor(getResources().getColor(R.color.colorRed));
                     } else {
                         tvAverDia.setTextColor(getResources().getColor(R.color.colorOrange));
@@ -1190,16 +1218,16 @@ public class MainActivity extends AppCompatActivity
                                 tvHomeSys1.setText(bp[1]);
                                 tvHomeDia1.setText(bp[0]);
 
-                                if(Float.parseFloat(bp[1]) >= 120) {
-                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                if (Float.parseFloat(bp[1]) >= 120) {
+                                    if (Float.parseFloat(bp[1]) >= 140) {
                                         tvHomeSys1.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeSys1.setTextColor(getResources().getColor(R.color.colorOrange));
                                     }
                                 }
 
-                                if(Float.parseFloat(bp[0]) >= 80) {
-                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                if (Float.parseFloat(bp[0]) >= 80) {
+                                    if (Float.parseFloat(bp[0]) >= 90) {
                                         tvHomeDia1.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeDia1.setTextColor(getResources().getColor(R.color.colorOrange));
@@ -1211,16 +1239,16 @@ public class MainActivity extends AppCompatActivity
                                 tvHomeSys2.setText(bp[1]);
                                 tvHomeDia2.setText(bp[0]);
 
-                                if(Float.parseFloat(bp[1]) >= 120) {
-                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                if (Float.parseFloat(bp[1]) >= 120) {
+                                    if (Float.parseFloat(bp[1]) >= 140) {
                                         tvHomeSys2.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeSys2.setTextColor(getResources().getColor(R.color.colorOrange));
                                     }
                                 }
 
-                                if(Float.parseFloat(bp[0]) >= 80) {
-                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                if (Float.parseFloat(bp[0]) >= 80) {
+                                    if (Float.parseFloat(bp[0]) >= 90) {
                                         tvHomeDia2.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeDia2.setTextColor(getResources().getColor(R.color.colorOrange));
@@ -1232,16 +1260,16 @@ public class MainActivity extends AppCompatActivity
                                 tvHomeSys3.setText(bp[1]);
                                 tvHomeDia3.setText(bp[0]);
 
-                                if(Float.parseFloat(bp[1]) >= 120) {
-                                    if(Float.parseFloat(bp[1]) >= 140) {
+                                if (Float.parseFloat(bp[1]) >= 120) {
+                                    if (Float.parseFloat(bp[1]) >= 140) {
                                         tvHomeSys3.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeSys3.setTextColor(getResources().getColor(R.color.colorOrange));
                                     }
                                 }
 
-                                if(Float.parseFloat(bp[0]) >= 80) {
-                                    if(Float.parseFloat(bp[0]) >= 90) {
+                                if (Float.parseFloat(bp[0]) >= 80) {
+                                    if (Float.parseFloat(bp[0]) >= 90) {
                                         tvHomeDia3.setTextColor(getResources().getColor(R.color.colorRed));
                                     } else {
                                         tvHomeDia3.setTextColor(getResources().getColor(R.color.colorOrange));
@@ -1366,6 +1394,10 @@ public class MainActivity extends AppCompatActivity
 
             pred.setText("6개월 후 수축기혈압수치\n" + String.valueOf(Math.round(output[0]) + "mmHg"));
 
+            updateBPstatus(Math.round(output[0]));
+
+            mDatabase.child("users").child(userID).child("userPredDate").setValue(getTime3());
+
             final ScrollView scrollView = findViewById(R.id.tab_content3);
             scrollView.post(new Runnable() {
                 @Override
@@ -1373,8 +1405,22 @@ public class MainActivity extends AppCompatActivity
                     scrollView.fullScroll(ScrollView.FOCUS_UP);
                 }
             });
+
+            onResume();
         }
+
+
         return true;
+    }
+
+    private void updateBPstatus(int BP) {
+        if (BP >= 140) {
+            mDatabase.child("users").child(userID).child("userStatus").setValue("매우 위험 (" + BP + "mmHg)");
+        } else if (BP >= 120) {
+            mDatabase.child("users").child(userID).child("userStatus").setValue("위험 (" + BP + "mmHg)");
+        } else {
+            mDatabase.child("users").child(userID).child("userStatus").setValue("양호 (" + BP + "mmHg)");
+        }
     }
 
     //tensorflow 사용에 필요한 것
